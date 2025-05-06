@@ -1,5 +1,7 @@
 using FlashcardApi.Services;
 using FlashcardApi.Models;
+using FlashcardApi.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,7 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 // Register in-memory repository
-builder.Services.AddSingleton<IFlashcardRepository, FlashcardRepository>();
+builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
+builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlite("Data Source=flashcards.db"));
 
 var app = builder.Build();
 
@@ -36,12 +40,14 @@ app.MapPost("/decks", (Deck deck, IFlashcardRepository repo) =>
 
 app.MapPost("/decks/{deckId}/cards", (Guid deckId, Card card, IFlashcardRepository repo) =>
 {
-    var deck = repo.GetDeck(deckId);
-    if (deck is null)
-        return Results.NotFound($"Deck with ID {deckId} not found");
+    var added = repo.AddCard(deckId, card);
+    return Results.Created($"/decks/{deckId}/cards/{added.Id}", added);
+});
 
-    deck.Cards.Add(card);
-    return Results.Created($"/decks/{deckId}/{card.Id}", card);
+app.MapGet("decks/{deckId}/cards", (Guid deckId, IFlashcardRepository repo) =>
+{
+    var cards = repo.GetCards(deckId);
+    return Results.Ok(cards);
 });
 
 app.Run();
