@@ -3,6 +3,8 @@ using FlashcardApi.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -30,6 +32,16 @@ app.MapPost("/decks", (Deck deck, IFlashcardRepository repo) =>
 {
     var newDeck = repo.CreateDeck(deck);
     return Results.Created($"/decks/{newDeck.Id}", newDeck);
+});
+
+app.MapPost("/decks/{deckId}/cards", (Guid deckId, Card card, IFlashcardRepository repo) =>
+{
+    var deck = repo.GetDeck(deckId);
+    if (deck is null)
+        return Results.NotFound($"Deck with ID {deckId} not found");
+
+    deck.Cards.Add(card);
+    return Results.Created($"/decks/{deckId}/{card.Id}", card);
 });
 
 app.Run();
