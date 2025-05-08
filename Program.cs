@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -15,11 +16,20 @@ builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
 builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlite("Data Source=flashcards.db"));
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+       {
+           policy.WithOrigins("http://localhost:5173") // React port
+                 .AllowAnyHeader()
+                 .AllowAnyMethod();
+       });
+});
+
+
 var app = builder.Build();
 
-
-// We add a simpple health-check endpoint
-app.MapGet("/", () => Results.Ok("Flashcard API is running!"));
+app.UseCors();
 
 app.MapGet("/decks", (IFlashcardRepository repo) =>
 {
