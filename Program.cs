@@ -31,6 +31,8 @@ var app = builder.Build();
 
 app.UseCors();
 
+#region DeckEndpoints
+
 app.MapGet("/decks", (IFlashcardRepository repo) =>
 {
     return repo.GetAllDecks();
@@ -40,6 +42,12 @@ app.MapGet("/decks/{id}", (Guid id, IFlashcardRepository repo) =>
 {
     var deck = repo.GetDeck(id);
     return deck is not null ? Results.Ok(deck) : Results.NotFound();
+});
+
+app.MapGet("decks/{deckId}/cards", (Guid deckId, IFlashcardRepository repo) =>
+{
+    var cards = repo.GetCards(deckId);
+    return Results.Ok(cards);
 });
 
 app.MapPost("/decks", (Deck deck, IFlashcardRepository repo) =>
@@ -54,10 +62,18 @@ app.MapPost("/decks/{deckId}/cards", (Guid deckId, Card card, IFlashcardReposito
     return Results.Created($"/decks/{deckId}/cards/{added.Id}", added);
 });
 
-app.MapGet("decks/{deckId}/cards", (Guid deckId, IFlashcardRepository repo) =>
+app.MapPut("decks/{id}", async (Guid id, Deck updatedDeck, AppDbContext db) =>
 {
-    var cards = repo.GetCards(deckId);
-    return Results.Ok(cards);
+    var currentDeck = await db.Decks.FindAsync(id);
+    if (currentDeck is null) return Results.NotFound();
+
+    currentDeck.Name = updatedDeck.Name;
+    currentDeck.LastUpdateDate = DateTime.UtcNow;
+
+    await db.SaveChangesAsync();
+    return Results.Ok(currentDeck);
 });
+
+#endregion
 
 app.Run();
