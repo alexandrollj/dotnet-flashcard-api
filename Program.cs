@@ -62,16 +62,22 @@ app.MapPost("/decks/{deckId}/cards", (Guid deckId, Card card, IFlashcardReposito
     return Results.Created($"/decks/{deckId}/cards/{added.Id}", added);
 });
 
-app.MapPut("decks/{id}", async (Guid id, Deck updatedDeck, AppDbContext db) =>
+app.MapPut("/decks/{deckId}", (Guid deckId, Deck updatedDeck, IFlashcardRepository repo) =>
 {
-    var currentDeck = await db.Decks.FindAsync(id);
-    if (currentDeck is null) return Results.NotFound();
+    var currentDeck = repo.UpdateDeck(deckId, updatedDeck);
+    return Results.Ok(currentDeck);
+});
 
-    currentDeck.Name = updatedDeck.Name;
-    currentDeck.LastUpdateDate = DateTime.UtcNow;
+app.MapDelete("/decks/{id}", async (Guid id, AppDbContext db) =>
+{
+    var deck = await db.Decks.FindAsync(id);
+    if (deck is null) return Results.NotFound();
+
+    deck.Status = 0;
+    deck.LastUpdateDate = DateTime.UtcNow;
 
     await db.SaveChangesAsync();
-    return Results.Ok(currentDeck);
+    return Results.NoContent();
 });
 
 #endregion
