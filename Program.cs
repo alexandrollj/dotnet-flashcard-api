@@ -68,15 +68,9 @@ app.MapPut("/decks/{deckId}", (Guid deckId, Deck updatedDeck, IFlashcardReposito
     return Results.Ok(currentDeck);
 });
 
-app.MapDelete("/decks/{id}", async (Guid id, AppDbContext db) =>
+app.MapDelete("/decks/{id}", (Guid deckId, IFlashcardRepository repo) =>
 {
-    var deck = await db.Decks.FindAsync(id);
-    if (deck is null) return Results.NotFound();
-
-    deck.Status = 0;
-    deck.LastUpdateDate = DateTime.UtcNow;
-
-    await db.SaveChangesAsync();
+    var deck = repo.DeleteDeck(deckId);
     return Results.NoContent();
 });
 
