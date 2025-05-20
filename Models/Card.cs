@@ -8,4 +8,6 @@ public class Card
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public DateTime LastUpdateDate { get; set; } = DateTime.UtcNow;
     public Guid DeckId { get; set; }
+    public byte Status { get; set; } = 1;
+
 }
