@@ -11,10 +11,10 @@ public interface IFlashcardRepository
     Deck CreateDeck(Deck deck);
     Deck? UpdateDeck(Guid id, Deck deck);
     Deck? DeleteDeck(Guid id);
-    Card AddCard(Guid deckId, Card card);
-    IEnumerable<Card> GetCards(Guid deckId);
-    Card? GetCard(Guid deckId, Guid cardId);
-    Card? UpdateCard(Guid deckId, Guid cardId, Card updatedCard);
+    Card AddCardToDeck(Guid deckId, Card card);
+    IEnumerable<Card> GetCardsFromDeck(Guid deckId);
+    Card? GetCard(Guid cardId);
+    Card? UpdateCard(Guid cardId, Card updatedCard);
     Card? DeleteCard(Guid cardId);
 
 }
@@ -32,7 +32,7 @@ public class FlashcardRepository : IFlashcardRepository
     {
         return _context.Decks
             .Where(d => d.Status == 1)
-            .Include(d => d.Cards).ToList();
+            .Include(d => d.Cards.Where(s => s.Status == 1)).ToList();
 
     }
 
@@ -75,7 +75,7 @@ public class FlashcardRepository : IFlashcardRepository
         return deckToDelete;
     }
 
-    public Card AddCard(Guid deckId, Card card)
+    public Card AddCardToDeck(Guid deckId, Card card)
     {
         card.DeckId = deckId;
         _context.Cards.Add(card);
@@ -84,18 +84,18 @@ public class FlashcardRepository : IFlashcardRepository
     }
 
 
-    public IEnumerable<Card> GetCards(Guid deckId)
+    public IEnumerable<Card> GetCardsFromDeck(Guid deckId)
     {
         return _context.Cards.Where(c => c.DeckId == deckId).ToList();
     }
 
-    public Card? GetCard(Guid deckId, Guid cardId)
+    public Card? GetCard(Guid cardId)
     {
 
-        return _context.Cards.SingleOrDefault(c => c.Id == cardId && c.DeckId == deckId);
+        return _context.Cards.SingleOrDefault(c => c.Id == cardId);
     }
 
-    public Card? UpdateCard(Guid deckId, Guid cardId, Card updatedCard)
+    public Card? UpdateCard(Guid cardId, Card updatedCard)
     {
         var currentCard = _context.Cards.FirstOrDefault(c => c.Id == cardId && c.Status == 1);
         if (currentCard == null)
